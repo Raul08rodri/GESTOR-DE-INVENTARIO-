@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Negocio + Reportes</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Helvetica Neue', sans-serif;
+        }
+        body {
+            background: #eef2f7;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 0 0 1rem 0;
+            color: #1e3c72;
+        }
+        .moneda-config {
+            background: #f0f2f5;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+        .moneda-config label {
+            font-weight: bold;
+        }
+        .moneda-config input {
+            width: 70px;
+            text-align: center;
+            font-weight: bold;
+            margin-left: 8px;
+            padding: 4px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+        }
+        .tabs {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 25px 0 20px 0;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 8px;
+        }
+        .tab-btn {
+            background: #e9ecef;
+            border: none;
+            padding: 10px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tab-btn.active {
+            background: #1e3c72;
+            color: white;
+        }
+        .tab-pane {
+            display: none;
+            animation: fade 0.2s;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+        @keyframes fade {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: #f8fafc;
+            flex: 1;
+            min-width: 160px;
+            padding: 18px;
+            border-radius: 24px;
+            border-left: 6px solid #1e3c72;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .stat-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 1rem;
+        }
+        .stat-card .valor {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+        .alert {
+            background: #fff3e0;
+            border-left: 5px solid #e67e22;
+            padding: 12px 18px;
+            border-radius: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select, button {
+            padding: 10px 14px;
+            border-radius: 14px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+        }
+        button {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #0e2a4f;
+        }
+        .btn-danger {
+            background: #c0392b;
+        }
+        .btn-danger:hover {
+            background: #a82313;
+        }
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+        .btn-export {
+            background: #27ae60;
+            margin-left: 10px;
+        }
+        .buscar {
+            margin: 15px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .buscar input {
+            flex: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #eef2f7;
+        }
+        .stock-bajo {
+            color: #e67e22;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+        @media (max-width: 700px) {
+            .stats { flex-direction: column; }
+            .tabs { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>
+        📋 Mi Gestor de Negocio
+        <div class="moneda-config">
+            <label>💰 Símbolo moneda:</label>
+            <input type="text" id="monedaSimbolo" maxlength="5" value="$" style="width:60px">
+        </div>
+    </h1>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="dashboard">📊 Panel</button>
+        <button class="tab-btn" data-tab="productos">📦 Productos</button>
+        <button class="tab-btn" data-tab="vender">🛒 Vender</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="tab-pane active">
+        <div class="stats">
+            <div class="stat-card"><h3>💰 Ventas Hoy</h3><div class="valor" id="ventasHoyValor">$0</div></div>
+            <div class="stat-card"><h3>📦 Total Productos</h3><div class="valor" id="totalProductosValor">0</div></div>
+            <div class="stat-card"><h3>⚠️ Stock Bajo (≤5)</h3><div class="valor" id="stockBajoValor">0</div></div>
+        </div>
+        <div id="alertasStock" class="alert"></div>
+        <div style="margin-top: 20px;">
+            <button id="exportarVentasCompleto" class="btn-export">📎 Exportar TODAS las ventas (CSV)</button>
+        </div>
+    </div>
+
+    <!-- PRODUCTOS con búsqueda y exportación -->
+    <div id="productos" class="tab-pane">
+        <h2>➕ Agregar / Editar Producto</h2>
+        <div class="form-group"><label>Nombre</label><input type="text" id="prodNombre" placeholder="Ej: Café"></div>
+        <div class="form-group"><label>Precio</label><input type="number" id="prodPrecio" step="0.01"></div>
+        <div class="form-group"><label>Stock</label><input type="number" id="prodStock" value="10"></div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button id="btnAgregarProducto">➕ Agregar Producto</button>
+            <button id="btnLimpiarForm" class="btn-danger">🗑 Limpiar</button>
+            <button id="exportarProductosBtn" class="btn-export">📎 Exportar Productos a CSV</button>
+        </div>
+        <div class="buscar">
+            <input type="text" id="buscarProducto" placeholder="🔍 Buscar producto por nombre...">
+        </div>
+        <h3>📋 Lista de Productos</h3>
+        <table id="tablaProductos">
+            <thead><tr><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
+            <tbody id="cuerpoProductos"></tbody>
+        </table>
+    </div>
+
+    <!-- VENDER + lista de ventas de hoy con botón ANULAR -->
+    <div id="vender" class="tab-pane">
+        <h2>🛍️ Registrar Venta</h2>
+        <div class="form-group"><label>Producto</label><select id="selectProductoVenta"></select></div>
+        <div class="form-group"><label>Cantidad</label><input type="number" id="cantidadVenta" value="1" min="1"></div>
+        <button id="btnRegistrarVenta">✅ Vender Ahora</button>
+        <div id="mensajeVenta" style="margin-top: 12px; font-weight: bold;"></div>
+        <hr>
+        <h3>📜 Ventas registradas HOY  <button id="exportarVentasHoyBtn" class="btn-export btn-sm">📎 Exportar ventas de hoy</button></h3>
+        <table id="tablaVentasHoy">
+            <thead><tr><th>Producto</th><th>Cantidad</th><th>Total</th><th>Hora</th><th>Acción</th></tr></thead>
+            <tbody id="cuerpoVentasHoy"></tbody>
+        </table>
+    </div>
+</div>
+<div class="footer">
+    💾 Todos los datos se guardan automáticamente en tu navegador. Puedes anular ventas y cambiar el símbolo de moneda.
+</div>
+
+<script>
+    // ---------- DATOS GLOBALES ----------
+    let productos = [];
+    let ventas = [];        // cada venta: { id, fechaStr, productoId, nombreProducto, cantidad, total, hora }
+    let monedaSimbolo = "$";
+
+    // Claves localStorage
+    const STORAGE_PRODUCTOS = "gestor_productos_adv";
+    const STORAGE_VENTAS = "gestor_ventas_adv";
+    const STORAGE_MONEDA = "gestor_moneda_simbolo";
+
+    // Funciones auxiliares
+    function getFechaHoy() { return new Date().toISOString().split('T')[0]; }
+    function getHoraActual() { return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
+
+    function cargarDatos() {
+        const prodStored = localStorage.getItem(STORAGE_PRODUCTOS);
+        if(prodStored) productos = JSON.parse(prodStored);
+        else {
+            productos = [
+                { id: 1, nombre: "Café Americano", precio: 2000, stock: 12 },
+                { id: 2, nombre: "Empanada de carne", precio: 1200, stock: 6 },
+                { id: 3, nombre: "Jugo Natural", precio: 1800, stock: 5 },
+                { id: 4, nombre: "Sandwich mixto", precio: 3500, stock: 2 }
+            ];
+        }
+        const ventStored = localStorage.getItem(STORAGE_VENTAS);
+        if(ventStored) ventas = JSON.parse(ventStored);
+        else ventas = [];
+
+        const monedaStored = localStorage.getItem(STORAGE_MONEDA);
+        if(monedaStored) monedaSimbolo = monedaStored;
+        document.getElementById("monedaSimbolo").value = monedaSimbolo;
+    }
+
+    function guardarProductos() { localStorage.setItem(STORAGE_PRODUCTOS, JSON.stringify(productos)); }
+    function guardarVentas() { localStorage.setItem(STORAGE_VENTAS, JSON.stringify(ventas)); }
+    function guardarMoneda() { localStorage.setItem(STORAGE_MONEDA, monedaSimbolo); }
+
+    // Obtener ventas de hoy
+    function getVentasDeHoy() { return ventas.filter(v => v.fechaStr === getFechaHoy()); }
+    function getTotalVentasHoy() { return getVentasDeHoy().reduce((sum, v) => sum + v.total, 0); }
+    function getProductosStockBajo() { return productos.filter(p => p.stock <= 5); }
+
+    // Refrescar moneda en toda la interfaz (formato numérico)
+    function formatearMoneda(valor) { return monedaSimbolo + valor.toFixed(2); }
+
+    // Actualizar todos los componentes visuales
+    function actualizarDashboard() {
+        document.getElementById("ventasHoyValor").innerHTML = formatearMoneda(getTotalVentasHoy());
+        document.getElementById("totalProductosValor").innerText = productos.length;
+        const bajos = getProductosStockBajo();
+        document.getElementById("stockBajoValor").innerText = bajos.length;
+        const alertDiv = document.getElementById("alertasStock");
+        if(bajos.length === 0) {
+            alertDiv.innerHTML = "✅ Todos los productos tienen stock suficiente (>5).";
+            alertDiv.style.background = "#e8f5e9";
+        } else {
+            let lista = "<strong>⚠️ Productos con stock bajo (≤5):</strong><ul>";
+            bajos.forEach(p => { lista += `<li>${p.nombre} - stock: ${p.stock}</li>`; });
+            lista += "</ul>";
+            alertDiv.innerHTML = lista;
+            alertDiv.style.background = "#fff3e0";
+        }
+    }
+
+    // Renderizar tabla de productos con búsqueda
+    let filtroBusqueda = "";
+    function renderizarTablaProductos() {
+        const tbody = document.getElementById("cuerpoProductos");
+        tbody.innerHTML = "";
+        let productosFiltrados = productos.filter(p => p.nombre.toLowerCase().includes(filtroBusqueda.toLowerCase()));
+        productosFiltrados.forEach(prod => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = prod.nombre;
+            row.insertCell(1).innerHTML = formatearMoneda(prod.precio);
+            const stockCell = row.insertCell(2);
+            stockCell.innerText = prod.stock;
+            if(prod.stock <= 5) stockCell.className = "stock-bajo";
+            const accCell = row.insertCell(3);
+            const btnEdit = document.createElement("button"); btnEdit.innerText = "✏️ Editar"; btnEdit.classList.add("btn-sm");
+            btnEdit.onclick = () => editarProducto(prod.id);
+            const btnDel = document.createElement("button"); btnDel.innerText = "❌ Eliminar"; btnDel.classList.add("btn-sm", "btn-danger");
+            btnDel.onclick = () => eliminarProducto(prod.id);
+            accCell.appendChild(btnEdit); accCell.appendChild(btnDel);
+        });
+    }
+
+    function editarProducto(id) {
+        const prod = productos.find(p => p.id === id);
+        if(prod) {
+            document.getElementById("prodNombre").value = prod.nombre;
+            document.getElementById("prodPrecio").value = prod.precio;
+            document.getElementById("prodStock").value = prod.stock;
+            window.productoEditandoId = id;
+            const btn = document.getElementById("btnAgregarProducto");
+            btn.innerText = "✏️ Actualizar Producto";
+            btn.style.backgroundColor = "#f39c12";
+        }
+    }
+
+    function eliminarProducto(id) {
+        if(confirm("¿Eliminar producto? Las ventas pasadas quedarán como histórico.")) {
+            productos = productos.filter(p => p.id !== id);
+            guardarProductos();
+            renderizarTablaProductos();
+            actualizarDashboard();
+            cargarSelectProductos();
+            renderizarVentasHoy();
+        }
+    }
+
+    function agregarOActualizar() {
+        const nombre = document.getElementById("prodNombre").value.trim();
+        const precio = parseFloat(document.getElementById("prodPrecio").value);
+        let stock = parseInt(document.getElementById("prodStock").value);
+        if(!nombre) { alert("Nombre requerido"); return; }
+        if(isNaN(precio) || precio <= 0) { alert("Precio válido"); return; }
+        if(isNaN(stock)) stock = 0;
+        if(window.productoEditandoId) {
+            const idx = productos.findIndex(p => p.id === window.productoEditandoId);
+            if(idx !== -1) {
+                productos[idx].nombre = nombre;
+                productos[idx].precio = precio;
+                productos[idx].stock = stock;
+                guardarProductos();
+                window.productoEditandoId = null;
+                document.getElementById("btnAgregarProducto").innerText = "➕ Agregar Producto";
+                document.getElementById("btnAgregarProducto").style.backgroundColor = "";
+                limpiarFormularioProducto();
+                renderizarTablaProductos();
+                actualizarDashboard();
+                cargarSelectProductos();
+            }
+        } else {
+            const nuevoId = productos.length ? Math.max(...productos.map(p=>p.id)) + 1 : 1;
+            productos.push({ id: nuevoId, nombre, precio, stock });
+            guardarProductos();
+            limpiarFormularioProducto();
+            renderizarTablaProductos();
+            actualizarDashboard();
+            cargarSelectProductos();
+        }
+    }
+
+    function limpiarFormularioProducto() {
+        document.getElementById("prodNombre").value = "";
+        document.getElementById("prodPrecio").value = "";
+        document.getElementById("prodStock").value = "1";
+        if(window.productoEditandoId) {
+            window.productoEditandoId = null;
+            document.getElementById("btnAgregarProducto").innerText = "➕ Agregar Producto";
+            document.getElementById("btnAgregarProducto").style.backgroundColor = "";
+        }
+    }
+
+    function cargarSelectProductos() {
+        const select = document.getElementById("selectProductoVenta");
+        select.innerHTML = "";
+        productos.forEach(prod => {
+            const opt = document.createElement("option");
+            opt.value = prod.id;
+            opt.textContent = `${prod.nombre} - stock: ${prod.stock} - ${formatearMoneda(prod.precio)}`;
+            select.appendChild(opt);
+        });
+        if(productos.length === 0) {
+            const opt = document.createElement("option");
+            opt.text = "No hay productos. Agrega uno.";
+            select.appendChild(opt);
+        }
+    }
+
+    function registrarVenta() {
+        if(productos.length === 0) { mostrarMensaje("No hay productos", true); return; }
+        const productoId = parseInt(document.getElementById("selectProductoVenta").value);
+        const cantidad = parseInt(document.getElementById("cantidadVenta").value);
+        const producto = productos.find(p => p.id === productoId);
+        if(!producto) return;
+        if(isNaN(cantidad) || cantidad <= 0) { mostrarMensaje("Cantidad inválida", true); return; }
+        if(producto.stock < cantidad) { mostrarMensaje(`Stock insuficiente. Quedan ${producto.stock}`, true); return; }
+        producto.stock -= cantidad;
+        const total = producto.precio * cantidad;
+        const nuevaVenta = {
+            id: Date.now(),
+            fechaStr: getFechaHoy(),
+            productoId: producto.id,
+            nombreProducto: producto.nombre,
+            cantidad: cantidad,
+            total: total,
+            hora: getHoraActual()
+        };
+        ventas.push(nuevaVenta);
+        guardarProductos();
+        guardarVentas();
+        renderizarTablaProductos();
+        actualizarDashboard();
+        cargarSelectProductos();
+        renderizarVentasHoy();
+        mostrarMensaje(`✅ Venta exitosa: ${cantidad} x ${producto.nombre} - ${formatearMoneda(total)}`, false);
+        document.getElementById("cantidadVenta").value = "1";
+    }
+
+    function mostrarMensaje(msg, error) {
+        const div = document.getElementById("mensajeVenta");
+        div.innerHTML = msg;
+        div.style.color = error ? "red" : "green";
+        setTimeout(() => { div.innerHTML = ""; }, 3500);
+    }
+
+    // ANULAR VENTA (devuelve stock)
+    function anularVenta(ventaId) {
+        const venta = ventas.find(v => v.id === ventaId);
+        if(!venta) return;
+        if(confirm(`¿Anular venta de ${venta.nombreProducto} (x${venta.cantidad})? Se devolverá el stock.`)) {
+            // devolver stock al producto
+            const producto = productos.find(p => p.id === venta.productoId);
+            if(producto) {
+                producto.stock += venta.cantidad;
+                guardarProductos();
+            }
+            // eliminar venta del array
+            ventas = ventas.filter(v => v.id !== ventaId);
+            guardarVentas();
+            // refrescar interfaces
+            renderizarTablaProductos();
+            actualizarDashboard();
+            cargarSelectProductos();
+            renderizarVentasHoy();
+            mostrarMensaje("Venta anulada y stock restaurado", false);
+        }
+    }
+
+    function renderizarVentasHoy() {
+        const tbody = document.getElementById("cuerpoVentasHoy");
+        tbody.innerHTML = "";
+        const ventasHoy = getVentasDeHoy();
+        if(ventasHoy.length === 0) {
+            const row = tbody.insertRow();
+            row.insertCell(0).colSpan = 5;
+            row.insertCell(0).innerText = "No hay ventas hoy.";
+            return;
+        }
+        ventasHoy.forEach(venta => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = venta.nombreProducto;
+            row.insertCell(1).innerText = venta.cantidad;
+            row.insertCell(2).innerHTML = formatearMoneda(venta.total);
+            row.insertCell(3).innerText = venta.hora;
+            const btnAnular = document.createElement("button");
+            btnAnular.innerText = "⛔ Anular";
+            btnAnular.classList.add("btn-sm", "btn-danger");
+            btnAnular.onclick = () => anularVenta(venta.id);
+            const tdAcc = row.insertCell(4);
+            tdAcc.appendChild(btnAnular);
+        });
+    }
+
+    // Exportar a CSV
+    function exportarCSV(data, nombreArchivo, columnas) {
+        let csvContent = columnas.join(",") + "\n";
+        data.forEach(row => {
+            let fila = columnas.map(col => {
+                let val = row[col];
+                if(typeof val === "string" && (val.includes(",") || val.includes("\n"))) val = `"${val}"`;
+                return val;
+            }).join(",");
+            csvContent += fila + "\n";
+        });
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.setAttribute("download", nombreArchivo);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    function exportarProductos() {
+        const columnas = ["id", "nombre", "precio", "stock"];
+        exportarCSV(productos, "productos.csv", columnas);
+    }
+    function exportarVentasCompletas() {
+        const columnas = ["id", "fechaStr", "productoId", "nombreProducto", "cantidad", "total", "hora"];
+        exportarCSV(ventas, "todas_ventas.csv", columnas);
+    }
+    function exportarVentasHoy() {
+        const ventasHoy = getVentasDeHoy();
+        const columnas = ["id", "fechaStr", "productoId", "nombreProducto", "cantidad", "total", "hora"];
+        exportarCSV(ventasHoy, "ventas_hoy.csv", columnas);
+    }
+
+    // Cambio de moneda dinámico
+    function actualizarMonedaGlobal() {
+        monedaSimbolo = document.getElementById("monedaSimbolo").value.trim();
+        if(monedaSimbolo === "") monedaSimbolo = "$";
+        guardarMoneda();
+        actualizarDashboard();
+        renderizarTablaProductos();
+        renderizarVentasHoy();
+        cargarSelectProductos();   // actualiza el texto con nuevo símbolo
+    }
+
+    // Búsqueda en productos
+    function setupBusqueda() {
+        const inputBuscar = document.getElementById("buscarProducto");
+        inputBuscar.addEventListener("input", (e) => {
+            filtroBusqueda = e.target.value;
+            renderizarTablaProductos();
+        });
+    }
+
+    // Pestañas
+    function initTabs() {
+        const btns = document.querySelectorAll(".tab-btn");
+        const panes = document.querySelectorAll(".tab-pane");
+        btns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const tabId = btn.getAttribute("data-tab");
+                btns.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                panes.forEach(p => p.classList.remove("active"));
+                document.getElementById(tabId).classList.add("active");
+                if(tabId === "productos") renderizarTablaProductos();
+                if(tabId === "vender") { cargarSelectProductos(); renderizarVentasHoy(); }
+                if(tabId === "dashboard") actualizarDashboard();
+            });
+        });
+    }
+
+    // Inicialización
+    function init() {
+        cargarDatos();
+        guardarProductos(); guardarVentas();
+        actualizarDashboard();
+        renderizarTablaProductos();
+        cargarSelectProductos();
+        renderizarVentasHoy();
+        initTabs();
+        setupBusqueda();
+
+        document.getElementById("btnAgregarProducto").addEventListener("click", agregarOActualizar);
+        document.getElementById("btnLimpiarForm").addEventListener("click", limpiarFormularioProducto);
+        document.getElementById("btnRegistrarVenta").addEventListener("click", registrarVenta);
+        document.getElementById("exportarProductosBtn").addEventListener("click", exportarProductos);
+        document.getElementById("exportarVentasCompleto").addEventListener("click", exportarVentasCompletas);
+        document.getElementById("exportarVentasHoyBtn").addEventListener("click", exportarVentasHoy);
+        document.getElementById("monedaSimbolo").addEventListener("change", actualizarMonedaGlobal);
+        window.productoEditandoId = null;
+    }
+    init();
+</script>
+</body>
+</html>
